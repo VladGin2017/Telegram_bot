@@ -9,19 +9,22 @@ def find_price_lukoil():
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
                       'Chrome/79.0.3945.79 Safari/537.36'}
 
-    reg2 = r'\d{2},\d{2}'
-
+    reg = r'\d{2},\d{2}'
     r = requests.get('https://lukoilazs.ru/category/stoimost-benzina-na-segodnya/', headers=headers)
-    soup = BS(r.content, 'html.parser')
+    if r.status_code == 200:
+        soup = BS(r.content, 'html.parser')
 
-    res = soup.find('div', class_='main-content-page').find_all(text=re.compile(reg2))
-    global price
-    price = res
+        res = soup.find('div', class_='main-content-page').find_all(text=re.compile(reg))
+        global price
+        price = res
 
-    i = 11
-    while i != 17:
-        i += 1
-        print(price[i])
+        i = 11
+        while i != 17:
+            i += 1
+            print(price[i])
+
+    else:
+        print(f"Ошибка {r.status_code}")
 
 
 def update_reg_92():
@@ -63,8 +66,24 @@ def update_diesel():
     cor.close()
 
 
+def update_reg_98():
+    con = sqlite3.connect('data_base.db')
+    cor = con.cursor()
+    column = 'reg_98'
+    res = price[15].replace(',', '.')
+    id = 'brand'
+    record_id = 'Лукойл'
+    query = 'UPDATE map SET ' + column + '=' + str(res) + ' WHERE ' + id + " = '" + str(record_id) + "'"
+    cor.execute(query)
+    con.commit()
+    cor.close()
+
+
 def run_lukoil():
     find_price_lukoil()
     update_reg_92()
     update_reg_95()
     update_diesel()
+    update_reg_98()
+
+
