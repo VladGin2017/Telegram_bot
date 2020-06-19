@@ -2,13 +2,10 @@ import config
 import telebot
 import sqlite3
 from emoji import emojize
-
 from geopy.distance import geodesic
 from telebot import types
 from datetime import datetime
-from image_creator import png_1
-from image_creator import png_2
-from image_creator import png_3
+from image_creator import png_1, png_2, png_3, png_4
 
 con = sqlite3.connect('data_base.db')
 cor = con.cursor()
@@ -20,8 +17,7 @@ lat = []
 for element in latitude:
     lat.append(element[0])
 latitude = lat
-del (lat)
-# print(latitude)
+del lat
 
 query_2 = 'SELECT longitude FROM map'
 cor.execute(query_2)
@@ -30,7 +26,7 @@ lon = []
 for element in longitude:
     lon.append(element[0])
 longitude = lon
-del (lon)
+del lon
 
 query_3 = 'SELECT adress FROM map'
 cor.execute(query_3)
@@ -39,7 +35,7 @@ adresses = []
 for elements in adress:
     adresses.append(elements[0])
 adress = adresses
-del (adresses)
+del adresses
 
 query_4 = 'SELECT brand FROM map'
 cor.execute(query_4)
@@ -48,7 +44,7 @@ brands = []
 for elements in brand:
     brands.append(elements[0])
 brand = brands
-del (brands)
+del brands
 
 query_5 = 'SELECT reg_92 FROM map'
 cor.execute(query_5)
@@ -57,7 +53,7 @@ reg = []
 for element in reg_92:
     reg.append(element[0])
 reg_92 = reg
-del (reg)
+del reg
 
 query_6 = 'SELECT reg_95 FROM map'
 cor.execute(query_6)
@@ -66,7 +62,7 @@ reg_1 = []
 for element in reg_95:
     reg_1.append(element[0])
 reg_95 = reg_1
-del (reg_1)
+del reg_1
 
 query_7 = 'SELECT diesel FROM map'
 cor.execute(query_7)
@@ -75,8 +71,20 @@ dt = []
 for element in diesel:
     dt.append(element[0])
 diesel = dt
-del (dt)
+del dt
 
+query_8 = 'SELECT reg_98 FROM map'
+cor.execute(query_8)
+reg_98 = cor.fetchall()
+reg_2 = []
+for element in reg_98:
+    if element is not None:
+        reg_2.append(element[0])
+reg_98 = reg_2
+del reg_2,
+
+loc = None
+global keyboard
 bot = telebot.TeleBot(config.token)
 
 
@@ -89,18 +97,15 @@ def start(message):
                                             (emojize(':white_check_mark:', use_aliases=True) +
                                              " Выводить информацию о ценах на топливо каждого бренда \n" +
                                              (emojize(':white_check_mark:', use_aliases=True) +
-                                              " Находить ближайшую АЗС с самым дешевым топливом в радиусе 2км \n" +
+                                              " Находить ближайшую АЗС с самым дешевым топливом в радиусе 1.5км \n" +
                                               (emojize(':white_check_mark:', use_aliases=True) +
-                                               " Вывод графика динамики цен \n\n\n" +
-                                               "В будущем появятся такие функции, как:\n" +
-                                               (emojize(':ballot_box_with_check:', use_aliases=True) +
-                                                " Поиск ближайшей АЗС по бренду\n\n\n" +
-                                                "Теперь введи /geo и опробуй бота " +
-                                                (emojize(':grinning:', use_aliases=True))))))))
+                                               " Вывод графика динамики цен \n\n\n"  +
+                                                "Теперь введи /menu и опробуй бота " +
+                                                (emojize(':grinning:', use_aliases=True)))))))
 
 
 @bot.message_handler(commands=['help'])
-def help(message):
+def help_(message):
     bot.send_message(message.chat.id, text="/menu - меню\n"
                                            "/geo - отправить свою геопозицию\n"
                                            "/start - информация о боте\n"
@@ -117,33 +122,35 @@ def geo(message):
                      reply_markup=keyboard)
 
 
+@bot.message_handler(commands=["menu"])
+def keyboard_(message):
+    global keyboard2
+    keyboard2 = types.InlineKeyboardMarkup(row_width=1)
+    button_1 = types.InlineKeyboardButton(text="Узнать цены" + (emojize(':mag_right:', use_aliases=True)),
+                                          callback_data="price")
+    button_2 = types.InlineKeyboardButton(text="Найти ближайшую АЗС" + (emojize(':round_pushpin:', use_aliases=True)),
+                                          callback_data="find_near")
+    button_3 = types.InlineKeyboardButton(text="Найти дешевое топливо" +
+                                               (emojize(':arrow_lower_right:', use_aliases=True)),
+                                          callback_data="low_price")
+    button_4 = types.InlineKeyboardButton(text="Динамика цен" + (emojize(':bar_chart:', use_aliases=True)),
+                                          callback_data="graph")
+    keyboard2.add(button_1, button_2, button_3, button_4)
+    bot.send_message(message.chat.id, text="Что хотите узнать?", reply_markup=keyboard2)
+
+
 @bot.message_handler(content_types=["location"])
 def location(message):
     global loc
     loc = (message.location.latitude, message.location.longitude)
-    bot.send_message(message.chat.id, text="Теперь напишите /menu и узнайте, как бот может Вам помочь.")
+    bot.send_message(message.chat.id, text="/menu")
     print('\n ------------------------------------------')
     print(datetime.now())
     print("Сообщение от {0} {1}. (id = {2})".format(message.from_user.first_name,
                                                     message.from_user.last_name,
                                                     str(message.from_user.id)))
     print("latitude: %s; longitude: %s" % (message.location.latitude, message.location.longitude))
-
-
-@bot.message_handler(commands=["menu"])
-def keyboard_(message):
-    global keyboard_2
-    keyboard_2 = types.InlineKeyboardMarkup(row_width=1)
-    button_1 = types.InlineKeyboardButton(text="Узнать цены" + (emojize(':mag_right:', use_aliases=True)),
-                                          callback_data="price")
-    button_2 = types.InlineKeyboardButton(text="Найти ближайшую АЗС" + (emojize(':round_pushpin:', use_aliases=True)),
-                                          callback_data="find_near")
-    button_3 = types.InlineKeyboardButton(text="Найти дешевое топливо" + (emojize(':arrow_lower_right:', use_aliases=True)),
-                                          callback_data="low_price")
-    button_4 = types.InlineKeyboardButton(text="Динамика цен" + (emojize(':bar_chart:', use_aliases=True)),
-                                          callback_data="graph")
-    keyboard_2.add(button_1, button_2, button_3, button_4)
-    bot.send_message(message.chat.id, text="Что хотите узнать?", reply_markup=keyboard_2)
+    print('------------------------------------------')
 
 
 @bot.message_handler(content_types=['text'])
@@ -153,7 +160,7 @@ def text(message):
 
 
 @bot.callback_query_handler(func=lambda call: True)
-def test(call):
+def main_menu(call):
     if call.data == "price":
         keyboard = types.InlineKeyboardMarkup(row_width=2)
         button_1 = types.InlineKeyboardButton(text="Прайм", callback_data="prime")
@@ -161,8 +168,8 @@ def test(call):
         button_3 = types.InlineKeyboardButton(text="Газпром (ак)", callback_data="gasprom_1")
         button_4 = types.InlineKeyboardButton(text="Газпром", callback_data="gasprom_2")
         button_5 = types.InlineKeyboardButton(text="Лукойл", callback_data="lukoil")
-        button_6 = types.InlineKeyboardButton(text="Роснефть", callback_data="rosneft")
-        button_7 = types.InlineKeyboardButton(text="Тайм", callback_data="time")
+        button_6 = types.InlineKeyboardButton(text="Тайм", callback_data="time")
+        button_7 = types.InlineKeyboardButton(text="Энергия", callback_data="energia")
         keyboard.add(button_1, button_2, button_3, button_4, button_5, button_6, button_7)
 
         bot.send_message(call.message.chat.id, text="Выберите бренд", reply_markup=keyboard)
@@ -175,7 +182,11 @@ def test(call):
                                                     (emojize(':fuelpump:', use_aliases=True)) +
                                                     "АИ-95: " + str(reg_95[64]) + "\n" +
                                                     (emojize(':fuelpump:', use_aliases=True)) +
-                                                    "ДТ: " + str(diesel[64]))
+                                                    "ДТ: " + str(diesel[64]) + "\n" +
+                                                    (emojize(':fuelpump:', use_aliases=True)) +
+                                                    "АИ-98: " + str(reg_98[64]))
+        print(f'Вызван callback: {call.data} \n')
+        print('------------------------------------------')
         bot.answer_callback_query(callback_query_id=call.id)
 
     if call.data == "berkut":
@@ -186,6 +197,8 @@ def test(call):
                                                     "АИ-95: " + str(reg_95[87]) + "\n" +
                                                     (emojize(':fuelpump:', use_aliases=True)) +
                                                     "ДТ: " + str(diesel[87]))
+        print(f'Вызван callback: {call.data} \n')
+        print('------------------------------------------')
         bot.answer_callback_query(callback_query_id=call.id)
 
     if call.data == "gasprom_1":
@@ -196,6 +209,8 @@ def test(call):
                                                     "АИ-95: " + str(reg_95[19]) + "\n" +
                                                     (emojize(':fuelpump:', use_aliases=True)) +
                                                     "ДТ: " + str(diesel[19]))
+        print(f'Вызван callback: {call.data} \n')
+        print('------------------------------------------')
         bot.answer_callback_query(callback_query_id=call.id)
 
     if call.data == "gasprom_2":
@@ -206,6 +221,8 @@ def test(call):
                                                     "АИ-95: " + str(reg_95[30]) + "\n" +
                                                     (emojize(':fuelpump:', use_aliases=True)) +
                                                     "ДТ: " + str(diesel[30]))
+        print(f'Вызван callback: {call.data} \n')
+        print('------------------------------------------')
         bot.answer_callback_query(callback_query_id=call.id)
 
     if call.data == "lukoil":
@@ -215,147 +232,230 @@ def test(call):
                                                     (emojize(':fuelpump:', use_aliases=True)) +
                                                     "АИ-95: " + str(reg_95[0]) + "\n" +
                                                     (emojize(':fuelpump:', use_aliases=True)) +
-                                                    "ДТ: " + str(diesel[0]))
-        bot.answer_callback_query(callback_query_id=call.id)
-
-    if call.data == "rosneft":
-        bot.send_message(call.message.chat.id, text=str(brand[80]) + ": " + "\n" +
+                                                    "ДТ: " + str(diesel[0]) + "\n" +
                                                     (emojize(':fuelpump:', use_aliases=True)) +
-                                                    "АИ-92: " + str(reg_92[80]) + "\n" +
-                                                    (emojize(':fuelpump:', use_aliases=True)) +
-                                                    "АИ-95: " + str(reg_95[80]) + "\n" +
-                                                    (emojize(':fuelpump:', use_aliases=True)) +
-                                                    "ДТ: " + str(diesel[80]))
+                                                    "АИ-98: " + str(reg_98[0]))
+        print(f'Вызван callback: {call.data} \n')
+        print('------------------------------------------')
         bot.answer_callback_query(callback_query_id=call.id)
 
     if call.data == "time":
-        bot.send_message(call.message.chat.id, text=str(brand[98]) + ": " + "\n" +
+        bot.send_message(call.message.chat.id, text=str(brand[91]) + ": " + "\n" +
                                                     (emojize(':fuelpump:', use_aliases=True)) +
-                                                    "АИ-92: " + str(reg_92[98]) + "\n" +
+                                                    "АИ-92: " + str(reg_92[91]) + "\n" +
                                                     (emojize(':fuelpump:', use_aliases=True)) +
-                                                    "АИ-95: " + str(reg_95[98]) + "\n" +
+                                                    "АИ-95: " + str(reg_95[91]) + "\n" +
                                                     (emojize(':fuelpump:', use_aliases=True)) +
-                                                    "ДТ: " + str(diesel[98]))
+                                                    "ДТ: " + str(diesel[91]))
+        print(f'Вызван callback: {call.data} \n')
+        print('------------------------------------------')
+        bot.answer_callback_query(callback_query_id=call.id)
+
+    if call.data == "energia":
+        bot.send_message(call.message.chat.id, text=str(brand[95]) + ": " + "\n" +
+                                                    (emojize(':fuelpump:', use_aliases=True)) +
+                                                    "АИ-92: " + str(reg_92[95]) + "\n" +
+                                                    (emojize(':fuelpump:', use_aliases=True)) +
+                                                    "АИ-95: " + str(reg_95[95]) + "\n" +
+                                                    (emojize(':fuelpump:', use_aliases=True)) +
+                                                    "ДТ: " + str(diesel[95]) + "\n" +
+                                                    (emojize(':fuelpump:', use_aliases=True)) +
+                                                    "АИ-98: " + str(reg_98[95]))
+        print(f'Вызван callback: {call.data} \n')
+        print('------------------------------------------')
         bot.answer_callback_query(callback_query_id=call.id)
 
     if call.data == "find_near":
-        global coincidence
-        your_dist = loc
-        res = []
-        i = -1
-        while i != len(latitude) - 1:
-            i = i + 1
-            coords = (latitude[i], longitude[i])
-            result = (geodesic(your_dist, coords)).kilometers
-            res.append(result)
-        minimum = min(res)
-        index = res.index(min(res))
+        if loc is not None:
+            res = []
+            for i in range(len(adress)):
+                coords = (latitude[i], longitude[i])
+                result = (geodesic(loc, coords)).kilometers
+                res.append(result)
+            index = res.index(min(res))
 
-        bot.send_message(call.message.chat.id,
-                         text="АЗС: " + (brand[index]) +
-                              "\nАдрес: " + (adress[index]) +
-                              "\nРасстояние: " + str("%.3f" % minimum) + " км." +
-                              "\nЦена за литр топлива: \n" +
-                              (emojize(':fuelpump:', use_aliases=True)) + "АИ-92 - " + str(reg_92[index]) + " руб.\n" +
-                              (emojize(':fuelpump:', use_aliases=True)) + "АИ-95 - " + str(reg_95[index]) + " руб.\n" +
-                              (emojize(':fuelpump:', use_aliases=True)) + "ДТ - " + str(diesel[index]) + " руб.")
+            bot.send_message(call.message.chat.id,
+                                text="АЗС: " + (brand[index]) +
+                                    "\nАдрес: " + (adress[index]) +
+                                    "\nРасстояние: " + str("%.3f" % min(res)) + " км." +
+                                    "\nЦена за литр топлива: \n" +
+                                    (emojize(':fuelpump:', use_aliases=True)) + "АИ-92 - " + str(
+                                    reg_92[index]) + " руб.\n" +
+                                    (emojize(':fuelpump:', use_aliases=True)) + "АИ-95 - " + str(
+                                    reg_95[index]) + " руб.\n" +
+                                    (emojize(':fuelpump:', use_aliases=True)) + "ДТ - " + str(diesel[index]) + " руб.")
 
-        bot.send_venue(call.message.chat.id, title=brand[index], address=adress[index],
-                       longitude=longitude[index], latitude=latitude[index], reply_markup=keyboard_2)
-        bot.answer_callback_query(callback_query_id=call.id)
+            bot.send_venue(call.message.chat.id, title=brand[index], address=adress[index],
+                            longitude=longitude[index], latitude=latitude[index])
+            print(f'Вызван callback: {call.data} \n'
+                  f'Расстояние от А до Б: {min(res)} \n '
+                  f'Адрес: {adress[index]} \n'
+                  f'АЗС: {brand[index]} \n'
+                  f'Номер элемента в списке: {index} \n'
+                  f'Аи-92: {reg_92[index]}, Аи-95: {reg_95[index]}, ДТ: {diesel[index]}'
+                  )
+            print('------------------------------------------')
+            bot.answer_callback_query(callback_query_id=call.id)
+
+        else:
+            bot.send_message(call.message.chat.id,
+                                text="Сначала отправьте свою геопозицию! /geo")
+            bot.answer_callback_query(callback_query_id=call.id)
 
     if call.data == "low_price":
-        keyboard = types.InlineKeyboardMarkup(row_width=1)
-        button_1 = types.InlineKeyboardButton(text=(emojize(':fuelpump:', use_aliases=True)) +
-                                                   "АИ-92", callback_data="regular_92")
-        button_2 = types.InlineKeyboardButton(text=(emojize(':fuelpump:', use_aliases=True)) +
-                                                   "АИ-95", callback_data="regular_95")
-        button_3 = types.InlineKeyboardButton(text=(emojize(':fuelpump:', use_aliases=True)) +
-                                                   "ДТ", callback_data="diesel")
-        keyboard.add(button_1, button_2, button_3)
+        global keyboard_1
+        if loc is not None:
+            keyboard_1 = types.InlineKeyboardMarkup(row_width=2)
+            button_1 = types.InlineKeyboardButton(text=(emojize(':fuelpump:', use_aliases=True)) +
+                                                       "АИ-92", callback_data="regular_92")
+            button_2 = types.InlineKeyboardButton(text=(emojize(':fuelpump:', use_aliases=True)) +
+                                                       "АИ-95", callback_data="regular_95")
+            button_3 = types.InlineKeyboardButton(text=(emojize(':fuelpump:', use_aliases=True)) +
+                                                       "ДТ", callback_data="diesel")
+            button_4 = types.InlineKeyboardButton(text=(emojize(':fuelpump:', use_aliases=True)) +
+                                                       "АИ-98", callback_data="regular_98")
+            keyboard_1.add(button_1, button_2, button_3, button_4)
 
-        bot.send_message(call.message.chat.id, text="В радиусе 2км бот найдет для Вас самое дешевое топливо: ",
-                         reply_markup=keyboard)
-        bot.answer_callback_query(callback_query_id=call.id)
+            bot.send_message(call.message.chat.id, text="В радиусе 1,5км бот найдет для Вас самое дешевое топливо: ",
+                             reply_markup=keyboard_1)
+            print(f'Вызван callback: {call.data} \n')
+            print('------------------------------------------')
+            bot.answer_callback_query(callback_query_id=call.id)
+
+        else:
+            bot.send_message(call.message.chat.id,
+                             text="Сначала отправьте свою геопозицию! /geo")
+            bot.answer_callback_query(callback_query_id=call.id)
 
     if call.data == "regular_92":
-        your_dist = loc
         res = []
         br = []
         adr = []
-        r_92 = []
-        i = -1
-        while i != len(reg_92) - 1:
-            i = i + 1
+        petrol = []
+        latit = []
+        longit =[]
+        for i in range(len(reg_92)):
             coords = (latitude[i], longitude[i])
-            result = (geodesic(your_dist, coords)).kilometers
-            if result <= 2:
+            result = (geodesic(loc, coords)).kilometers
+            if result <= 1.5:
                 res.append(result)
                 br.append(brand[i])
                 adr.append(adress[i])
-                r_92.append(reg_92[i])
-        index = r_92.index(min(r_92))
-
+                petrol.append(reg_92[i])
+                latit.append(latitude[i])
+                longit.append(longitude[i])
+        index = petrol.index(min(petrol))
+        bot.send_venue(call.message.chat.id, title=br[index], address=adr[index],
+                       longitude=longit[index], latitude=latit[index])
         bot.send_message(call.message.chat.id,
-                         text="АЗС: " + str(br[index]) + "\n"
-                               "Адрес: " + str(adr[index]) + "\n"
-                                "Цена за литр АИ-92 здесь составляет: " + str(r_92[index]) + "руб.")
+                         text=f"АЗС: {br[index]}" "\n"
+                              f"Адрес: {adr[index]}" "\n"
+                              f"Цена за литр АИ-92 здесь составляет: {petrol[index]} руб.", reply_markup=keyboard_1)
         bot.answer_callback_query(callback_query_id=call.id)
+        del res, br, adr, petrol, latit, longit
 
     if call.data == "regular_95":
-        your_dist = loc
         res = []
         br = []
         adr = []
-        r_95 = []
-        i = -1
-        while i != len(reg_95) - 1:
-            i = i + 1
+        petrol = []
+        latit = []
+        longit = []
+        for i in range(len(reg_95)):
             coords = (latitude[i], longitude[i])
-            result = (geodesic(your_dist, coords)).kilometers
-            if result <= 2:
+            result = (geodesic(loc, coords)).kilometers
+            if result <= 1.5:
                 res.append(result)
                 br.append(brand[i])
                 adr.append(adress[i])
-                r_95.append(reg_95[i])
-        index = r_95.index(min(r_95))
-
+                petrol.append(reg_95[i])
+                latit.append(latitude[i])
+                longit.append(longitude[i])
+        index = petrol.index(min(petrol))
+        bot.send_venue(call.message.chat.id, title=br[index], address=adr[index],
+                       longitude=longit[index], latitude=latit[index])
         bot.send_message(call.message.chat.id,
-                         text="АЗС: " + str(br[index]) + "\n"
-                               "Адрес: " + str(adr[index]) + "\n"
-                                "Цена за литр АИ-95 здесь составляет: " + str(r_95[index]) + "руб.")
+                         text=f"АЗС: {br[index]}" "\n"
+                              f"Адрес: {adr[index]}" "\n"
+                              f"Цена за литр АИ-95 здесь составляет: {petrol[index]} руб.", reply_markup=keyboard_1)
+        print(f'Вызван callback: {call.data} \n'
+              f'Адрес: {adr[index]} \n'
+              f'АЗС: {br[index]} \n'
+              f'Номер элемента в списке: {index} \n'
+              f'Аи-95: {petrol[index]}')
+        print('------------------------------------------')
         bot.answer_callback_query(callback_query_id=call.id)
+        del res, br, adr, petrol, latit, longit
 
     if call.data == "diesel":
-        your_dist = loc
         res = []
         br = []
         adr = []
         dis = []
-        i = -1
-        while i != len(diesel) - 1:
-            i = i + 1
+        latit = []
+        longit = []
+        for i in range(len(diesel)):
             coords = (latitude[i], longitude[i])
-            result = (geodesic(your_dist, coords)).kilometers
-            if result <= 2:
+            result = (geodesic(loc, coords)).kilometers
+            if result <= 1.5:
                 res.append(result)
                 br.append(brand[i])
                 adr.append(adress[i])
                 dis.append(diesel[i])
+                latit.append(latitude[i])
+                longit.append(longitude[i])
         index = dis.index(min(dis))
-
+        bot.send_venue(call.message.chat.id, title=br[index], address=adr[index],
+                       longitude=longit[index], latitude=latit[index])
         bot.send_message(call.message.chat.id,
-                         text="АЗС: " + str(br[index]) + "\n"
-                               "Адрес: " + str(adr[index]) + "\n"
-                                "Цена за литр ДТ здесь составляет: " + str(dis[index]) + "руб.")
+                         text=f"АЗС: {br[index]}" "\n"
+                              f"Адрес: {adr[index]}" "\n"
+                              f"Цена за литр ДТ здесь составляет: {dis[index]} руб.", reply_markup=keyboard_1)
+        print(f'Вызван callback: {call.data} \n'
+              f'Адрес: {adr[index]} \n'
+              f'АЗС: {br[index]} \n'
+              f'Номер элемента в списке: {index} \n'
+              f'ДТ: {dis[index]}')
+        print('------------------------------------------')
         bot.answer_callback_query(callback_query_id=call.id)
+        del res, br, adr, dis, latit, longit
+
+    if call.data == "regular_98":
+        res = []
+        br = []
+        adr = []
+        petrol = []
+        latit = []
+        longit = []
+        for i in range(len(reg_98)):
+            coords = (latitude[i], longitude[i])
+            result = (geodesic(loc, coords)).kilometers
+            if result <= 1.5:
+                res.append(result)
+                br.append(brand[i])
+                adr.append(adress[i])
+                petrol.append(reg_98[i])
+                latit.append(latitude[i])
+                longit.append(longitude[i])
+                if reg_98[i] is None:
+                    petrol.remove(reg_98[i])
+        index = petrol.index(min(petrol))
+        bot.send_venue(call.message.chat.id, title=br[index], address=adr[index],
+                       longitude=longit[index], latitude=latit[index])
+        bot.send_message(call.message.chat.id,
+                            text=f"АЗС: {br[index]}" "\n"
+                            f"Адрес: {adr[index]}" "\n"
+                            f"Цена за литр АИ-98 здесь составляет: {petrol[index]} руб.", reply_markup=keyboard_1)
+        bot.answer_callback_query(callback_query_id=call.id)
+        del res, br, adr, petrol, latit, longit
 
     if call.data == "graph":
-        keyboard = types.InlineKeyboardMarkup(row_width=3)
+        keyboard = types.InlineKeyboardMarkup(row_width=2)
         button_1 = types.InlineKeyboardButton(text="АИ-92", callback_data='png_92')
         button_2 = types.InlineKeyboardButton(text="АИ-95", callback_data='png_95')
         button_3 = types.InlineKeyboardButton(text="ДТ", callback_data='png_diesel')
-        keyboard.add(button_1, button_2, button_3)
+        button_4 = types.InlineKeyboardButton(text="АИ-98", callback_data='png_98')
+        keyboard.add(button_1, button_2, button_3, button_4)
 
         bot.send_message(call.message.chat.id, text="Выберите топливо", reply_markup=keyboard)
         bot.answer_callback_query(callback_query_id=call.id)
@@ -373,6 +473,11 @@ def test(call):
     if call.data == 'png_diesel':
         png_3()
         bot.send_photo(call.message.chat.id, open('diesel.png', 'rb'))
+        bot.answer_callback_query(callback_query_id=call.id)
+
+    if call.data == 'png_98':
+        png_4()
+        bot.send_photo(call.message.chat.id, open('regular_98.png', 'rb'))
         bot.answer_callback_query(callback_query_id=call.id)
 
 
