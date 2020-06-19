@@ -12,21 +12,25 @@ def find_price_time():
     reg = r'(\₽)'
 
     r = requests.get('https://vk.com/market-65011473', headers=headers)
-    soup = BS(r.content, 'html.parser')
-    global price
-    price = soup.find('div', class_='market_list').find_all(text=re.compile(reg))
+    if r.status_code == 200:
+        soup = BS(r.content, 'html.parser')
+        global price
+        price = soup.find('div', class_='market_list').find_all(text=re.compile(reg))
 
-    name = ['Тайм-92', 'АИ-92', 'Тайм-95', 'ДТ']
-    price.reverse()
-    del price[0]
+        name = ['Тайм-92', 'АИ-92', 'Тайм-95', 'ДТ']
+        price.reverse()
+        del price[0]
 
-    newprice = [x[:-2] for x in price]
-    price = newprice
+        newprice = [x[:-2] for x in price]
+        price = newprice
 
-    i = -1
-    while i != 3:
-        i += 1
-        print(name[i] + ': ' + price[i])
+        i = -1
+        while i != 3:
+            i += 1
+            print(name[i] + ': ' + price[i])
+
+    else:
+        print(f"Ошибка {r.status_code}")
 
 
 def update_reg_92():
