@@ -71,5 +71,3 @@ def run_berkut():
     update_reg_92()
     update_reg_95()
     update_diesel()
-
-find_price_berkut()
