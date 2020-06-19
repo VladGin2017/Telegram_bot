@@ -17,20 +17,25 @@ def find_price_gasprom_1():
         '.276272&city=%D0%9D%D0%BE%D0%B2%D0%BE%D1%81%D0%B8%D0%B1%D0%B8%D1%80%D1%81%D0%BA&FUEL%5B%5D=176&FUEL%5B%5D'
         '=177&PARAM_AZS%5B%5D=1232',
         headers=headers)
-    soup = BS(r.content, 'html.parser')
 
-    res = soup.find('div', class_='oh pt10')
-    global price
-    price = res.find_all(text=re.compile(reg))
-    name = ['G-95', 'АИ-95', 'АИ-92', 'ДТ']
+    if r.status_code == 200:
+        soup = BS(r.content, 'html.parser')
 
-    newprice = [x[:-2] for x in price]
-    price = newprice
+        res = soup.find('div', class_='oh pt10')
+        global price
+        price = res.find_all(text=re.compile(reg))
+        name = ['G-95', 'АИ-95', 'АИ-92', 'ДТ']
 
-    i = -1
-    while i != 3:
-        i += 1
-        print(name[i] + ': ' + price[i])
+        newprice = [x[:-2] for x in price]
+        price = newprice
+
+        i = -1
+        while i != 3:
+            i += 1
+            print(name[i] + ': ' + price[i])
+
+    else:
+        print(f"Ошибка {r.status_code}")
 
 
 def update_reg_92():
